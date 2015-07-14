@@ -38,6 +38,12 @@ namespace karto
   #define DISTANCE_PENALTY_GAIN   0.2
   #define ANGLE_PENALTY_GAIN      0.2
 
+
+  // Global vector of Edge structs for pushing back attempted loop closures
+  std::vector<edge> g_attemptedLoopClosures;
+  edge g_edge;
+  edge g_old_edge;
+  bool g_once = false;
   ////////////////////////////////////////////////////////////////////////////////////////
   ////////////////////////////////////////////////////////////////////////////////////////
   ////////////////////////////////////////////////////////////////////////////////////////
@@ -1231,6 +1237,9 @@ namespace karto
 
     LocalizedRangeScanVector candidateChain = FindPossibleLoopClosure(pScan, rSensorName, scanIndex);
 
+    g_edge.a.x = (double) pScan->GetCorrectedPose().GetX();
+    g_edge.a.y = (double) pScan->GetCorrectedPose().GetY();
+
     while (!candidateChain.empty())
     {
       Pose2 bestPose;
@@ -1268,6 +1277,21 @@ namespace karto
         if (fineResponse < m_pMapper->m_pLoopMatchMinimumResponseFine->GetValue())
         {
           m_pMapper->FireLoopClosureCheck("REJECTED!");
+
+          // For all of the candidate scans within the candidate chain that were rejected
+          for(uint i = 0; i < candidateChain.size(); i++)
+          {
+            g_edge.b.x = static_cast<double>(candidateChain.at(i)->GetCorrectedPose().GetX());
+            g_edge.b.y = static_cast<double>(candidateChain.at(i)->GetCorrectedPose().GetY());
+
+            if(g_once && compareEdge(g_edge, g_old_edge, .01))
+            {  // If they're not the same scan (and the loop has already gone through once...)
+              g_attemptedLoopClosures.push_back(g_edge); // Add them to the attempted loop closures list for visualization.
+            }
+
+            g_old_edge = g_edge;
+            g_once = true;
+          }
         }
         else
         {
@@ -2148,7 +2172,16 @@ namespace karto
     m_pUseResponseExpansion->SetValue((kt_bool)b);
   }
 
+  bool compareEdge(edge a, edge b, double delta){
+    if(std::abs(a.a.x - b.a.x) > delta && std::abs(a.a.y - b.a.y) > delta && std::abs(a.b.x - b.b.x) > delta && std::abs(a.b.y - b.b.y) > delta)
+      return true; // The two edges are the same within a tolerance
+    else
+      return false; // The two edges are different within a tolerance
+  }
 
+  void printEdge(edge a){
+    std::cout <<  "EDGE: a.x: " << a.a.x << " a.y: " << a.a.y << " b.x: " << a.b.x << " b.y: " << a.b.y << std::endl;
+  }
 
   void Mapper::Initialize(kt_double rangeThreshold)
   {
@@ -2417,5 +2450,13 @@ namespace karto
   ScanMatcher* Mapper::GetLoopScanMatcher() const
   {
     return m_pGraph->GetLoopScanMatcher();
+  }
+
+  void Mapper::getAttemptedLoopClosures(std::vector<edge> &vec)
+  {
+    for(uint i = 0; i < g_attemptedLoopClosures.size(); i++)
+    {
+      vec.push_back(g_attemptedLoopClosures[i]);
+    }
   }
 }  // namespace karto

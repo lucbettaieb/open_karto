@@ -25,6 +25,23 @@
 
 namespace karto
 {
+  // Point struct to constitute an edge.
+  struct point {
+    double x;
+    double y;
+  };
+  // Edge struct for defining visualization lines.
+  struct edge {
+    point a;
+    point b;
+  };
+
+  // Comparison function for edges.  Used in attempted loop closure processing.
+  bool compareEdge(edge a, edge b, double delta);
+
+  // Edge print function for debugging.
+  void printEdge(edge a);
+
   ////////////////////////////////////////////////////////////////////////////////////////
   // Listener classes
 
@@ -1942,6 +1959,8 @@ namespace karto
     void setParamMinimumAnglePenalty(double d);
     void setParamMinimumDistancePenalty(double d);
     void setParamUseResponseExpansion(bool b);
+
+    void getAttemptedLoopClosures(std::vector<edge> &vec);
   };
 }  // namespace karto
 
