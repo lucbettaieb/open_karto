@@ -29,6 +29,8 @@ namespace karto
   struct point {
     double x;
     double y;
+    uint id;
+
   };
   // Edge struct for defining visualization lines.
   struct edge {

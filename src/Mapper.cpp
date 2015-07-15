@@ -26,7 +26,7 @@
 #include <math.h>
 #include <assert.h>
 
-#include "open_karto/Mapper.h"
+#include <open_karto/Mapper.h>
 
 namespace karto
 {
@@ -1237,8 +1237,9 @@ namespace karto
 
     LocalizedRangeScanVector candidateChain = FindPossibleLoopClosure(pScan, rSensorName, scanIndex);
 
-    g_edge.a.x = (double) pScan->GetCorrectedPose().GetX();
-    g_edge.a.y = (double) pScan->GetCorrectedPose().GetY();
+    g_edge.a.x = static_cast<double>(pScan->GetCorrectedPose().GetX());
+    g_edge.a.y = static_cast<double>(pScan->GetCorrectedPose().GetY());
+    g_edge.a.id = static_cast<int>(pScan->GetUniqueId());
 
     while (!candidateChain.empty())
     {
@@ -1283,6 +1284,7 @@ namespace karto
           {
             g_edge.b.x = static_cast<double>(candidateChain.at(i)->GetCorrectedPose().GetX());
             g_edge.b.y = static_cast<double>(candidateChain.at(i)->GetCorrectedPose().GetY());
+            g_edge.b.id = static_cast<int>(candidateChain.at(i)->GetUniqueId());
 
             if(g_once && compareEdge(g_edge, g_old_edge, .01))
             {  // If they're not the same scan (and the loop has already gone through once...)
